@@ -4,8 +4,8 @@ import 'confirm_page.dart';
 class CameraPage extends StatelessWidget {
   const CameraPage({super.key});
 
-       @override
-   Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Column(
@@ -14,7 +14,7 @@ class CameraPage extends StatelessWidget {
             ElevatedButton(
               child: const Text('Entrar a confirmar datos'),
               onPressed: () {
-                Navigator.pushReplacement(
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const ConfirmPage()),
                 );

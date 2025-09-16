@@ -5,6 +5,19 @@ class ConfirmPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('Pantalla confirmar la foto y hacer el analisis'));
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Confirmar"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      body: const Center(
+        child: Text('Pantalla confirmar la foto y hacer el análisis'),
+      ),
+    );
   }
 }
