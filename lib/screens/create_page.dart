@@ -10,28 +10,31 @@ class CreatePage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Sección del encabezado con logo y fondo diagonal
-            Container(
-              width: double.infinity,
-              height: 200,
-              decoration: const BoxDecoration(
+            // Encabezado negro con corte diagonal inverso
+            ClipPath(
+              clipper: InvertedDiagonalClipper(),
+              child: Container(
+                width: double.infinity,
+                height: 200,
                 color: Colors.black,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(50),
-                ),
-              ),
-              child: Center(
-                child: Container(
-                  width: 110,
-                  height: 110,
-                  decoration: const BoxDecoration(
-                    color: Color.fromARGB(255, 243, 33, 205), // Rosa distintivo
-                    shape: BoxShape.circle,
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'lib/assets/logo2SmartSwine.png', // Logo
-                      fit: BoxFit.cover,
+                child: Center(
+                  child: Container(
+                    width: 110,
+                    height: 110,
+                    decoration: const BoxDecoration(
+                      color: Color.fromARGB(
+                        255,
+                        243,
+                        33,
+                        205,
+                      ), // Rosa distintivo
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'lib/assets/logo2SmartSwine.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
@@ -130,4 +133,20 @@ class CreatePage extends StatelessWidget {
       ),
     );
   }
+}
+
+// CustomClipper con diagonal invertida (derecha -> izquierda)
+class InvertedDiagonalClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    Path path = Path();
+    path.lineTo(0, size.height); // Abajo izquierda
+    path.lineTo(size.width, size.height - 50); // Diagonal hacia abajo derecha
+    path.lineTo(size.width, 0); // Arriba derecha
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
