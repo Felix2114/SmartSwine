@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'data_page.dart'; // <--- Añade esta línea
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.pink,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const AnalysisPage(), // Aquí se inicia con la página de historial
+      home: const AnalysisPage(),
     );
   }
 }
@@ -46,7 +47,7 @@ class AnalysisPage extends StatelessWidget {
         centerTitle: true,
       ),
       body: Container(
-        color: const Color(0xFFF0F0F0), // Color de fondo
+        color: const Color(0xFFF0F0F0),
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
@@ -79,11 +80,22 @@ class AnalysisPage extends StatelessWidget {
             // Lista de elementos del historial
             Expanded(
               child: ListView.builder(
-                itemCount: 5, // Reemplaza con la longitud de tus datos
+                itemCount: 5,
                 itemBuilder: (context, index) {
-                  return const HistoryListItem(
-                    breed: 'Pietran',
-                    date: '21/05/20',
+                  return GestureDetector(
+                    onTap: () {
+                      // Ahora puedes navegar a DataPage directamente
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DataPage(),
+                        ),
+                      );
+                    },
+                    child: const HistoryListItem(
+                      breed: 'Pietran',
+                      date: '21/05/20',
+                    ),
                   );
                 },
               ),
