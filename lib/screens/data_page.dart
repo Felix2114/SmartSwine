@@ -13,11 +13,14 @@ class DataPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const StartPage()),
-            );
-          },
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const StartPage(initialIndex: 2),
+    ),
+  );
+},
+
         ),
         title: const Text(
           'ANALISIS',

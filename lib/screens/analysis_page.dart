@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'data_page.dart'; // <--- Añade esta línea
+import 'data_page.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -34,7 +34,7 @@ class AnalysisPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () {
-            // Maneja el botón de retroceso
+            
           },
         ),
         title: const Text(
@@ -52,7 +52,7 @@ class AnalysisPage extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Barra de búsqueda
+            
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               decoration: BoxDecoration(
@@ -77,14 +77,14 @@ class AnalysisPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // Lista de elementos del historial
+            
             Expanded(
               child: ListView.builder(
                 itemCount: 5,
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      // Ahora puedes navegar a DataPage directamente
+                     
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -107,7 +107,7 @@ class AnalysisPage extends StatelessWidget {
   }
 }
 
-// Widget para un solo elemento de la lista
+
 class HistoryListItem extends StatelessWidget {
   final String breed;
   final String date;
@@ -137,10 +137,10 @@ class HistoryListItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icono de cerdito
+          
           const Icon(Icons.cruelty_free, size: 40, color: Colors.pink),
           const SizedBox(width: 16),
-          // Raza y fecha
+          
           Expanded(
             child: Text(
               '$breed $date',
@@ -150,7 +150,7 @@ class HistoryListItem extends StatelessWidget {
               ),
             ),
           ),
-          // Flecha de menú desplegable
+          
           const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
         ],
       ),

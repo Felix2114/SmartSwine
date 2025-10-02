@@ -5,21 +5,27 @@ import 'home_page.dart';
 import 'analysis_page.dart';
 
 class StartPage extends StatefulWidget {
-  const StartPage({super.key});
+  final int initialIndex;
+  const StartPage({super.key, this.initialIndex = 0});
 
   @override
   State<StartPage> createState() => _StartPage();
 }
 
 class _StartPage extends State<StartPage> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex; 
+  }
 
   final List<Widget> _screens = const [
     HomePage(),
-   CameraPage(),
-   AnalysisPage(),
+    CameraPage(),
+    AnalysisPage(),
     SettingsPage(),
-    
   ];
 
   void _onItemTapped(int index) {
@@ -28,43 +34,21 @@ class _StartPage extends State<StartPage> {
     });
   }
 
-  final List<String> _titles = [
-    'Home',
-    'Camara',
-    'Analisis',
-    'Configuración',
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
-      ),
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        selectedItemColor: const Color.fromARGB(255, 243, 33, 205),  
-        unselectedItemColor: Colors.grey, 
+        selectedItemColor: const Color.fromARGB(255, 243, 33, 205),
+        unselectedItemColor: Colors.grey,
         backgroundColor: Colors.black,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.camera),
-            label: 'Camara',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'Analisis',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Configuración',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.camera), label: 'Camara'),
+          BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Analisis'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Configuración'),
         ],
       ),
     );

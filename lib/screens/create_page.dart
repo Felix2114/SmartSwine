@@ -10,40 +10,52 @@ class CreatePage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Encabezado negro con corte diagonal inverso
+            
             ClipPath(
               clipper: InvertedDiagonalClipper(),
               child: Container(
                 width: double.infinity,
                 height: 200,
                 color: Colors.black,
-                child: Center(
-                  child: Container(
-                    width: 110,
-                    height: 110,
-                    decoration: const BoxDecoration(
-                      color: Color.fromARGB(
-                        255,
-                        243,
-                        33,
-                        205,
-                      ), // Rosa distintivo
-                      shape: BoxShape.circle,
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'lib/assets/logo2SmartSwine.png',
-                        fit: BoxFit.cover,
+                child: Stack(
+                  children: [
+                    
+                    Positioned(
+                      top: 16,
+                      left: 16,
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+                        onPressed: () {
+                          Navigator.pop(context); 
+                        },
                       ),
                     ),
-                  ),
+
+                    
+                    Center(
+                      child: Container(
+                        width: 110,
+                        height: 110,
+                        decoration: const BoxDecoration(
+                          color: Color.fromARGB(255, 243, 33, 205), 
+                          shape: BoxShape.circle,
+                        ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/logo2SmartSwine.png', 
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
             const SizedBox(height: 40),
 
-            // Título
+           
             const Text(
               'Create new\nAccount',
               textAlign: TextAlign.center,
@@ -56,7 +68,7 @@ class CreatePage extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // Subtítulo
+           
             const Text(
               'Already Registered? Log in here.',
               style: TextStyle(fontSize: 14, color: Colors.black54),
@@ -64,7 +76,7 @@ class CreatePage extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            // Formulario
+            
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Column(
@@ -76,13 +88,13 @@ class CreatePage extends StatelessWidget {
                   _textField("******", obscureText: true),
                   const SizedBox(height: 40),
 
-                  // Botón Sign Up
+                  
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Lógica de registro
+                        
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
@@ -109,7 +121,7 @@ class CreatePage extends StatelessWidget {
     );
   }
 
-  // Widget de campo de texto
+  
   static Widget _textField(String hint, {bool obscureText = false}) {
     return TextField(
       obscureText: obscureText,
@@ -135,14 +147,14 @@ class CreatePage extends StatelessWidget {
   }
 }
 
-// CustomClipper con diagonal invertida (derecha -> izquierda)
+
 class InvertedDiagonalClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height); // Abajo izquierda
-    path.lineTo(size.width, size.height - 50); // Diagonal hacia abajo derecha
-    path.lineTo(size.width, 0); // Arriba derecha
+    path.lineTo(0, size.height); 
+    path.lineTo(size.width, size.height - 50); 
+    path.lineTo(size.width, 0); 
     path.close();
     return path;
   }
