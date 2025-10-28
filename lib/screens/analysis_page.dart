@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'data_page.dart'; 
+import 'data_page.dart';
+import '../models/cerdo_model.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +28,28 @@ class AnalysisPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
+    final List<Cerdo> listaCerdos = [
+      Cerdo(
+        id: 1,
+        nombre: 'poke',
+        raza: 'Pietrain',
+        fechaNacimiento: DateTime(2023, 5, 21),
+      ),
+      Cerdo(
+        id: 2,
+        nombre: 'gil',
+        raza: 'Duroc',
+        fechaNacimiento: DateTime(2023, 8, 12),
+      ),
+      Cerdo(
+        id: 3,
+        nombre: 'emmanuel',
+        raza: 'Landrace',
+        fechaNacimiento: DateTime(2023, 11, 30),
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -34,7 +57,7 @@ class AnalysisPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
           onPressed: () {
-            
+            Navigator.pop(context);
           },
         ),
         title: const Text(
@@ -52,7 +75,6 @@ class AnalysisPage extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               decoration: BoxDecoration(
@@ -77,14 +99,13 @@ class AnalysisPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            
             Expanded(
               child: ListView.builder(
-                itemCount: 5,
+                itemCount: listaCerdos.length,
                 itemBuilder: (context, index) {
+                  final cerdo = listaCerdos[index];
                   return GestureDetector(
                     onTap: () {
-                     
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -92,9 +113,11 @@ class AnalysisPage extends StatelessWidget {
                         ),
                       );
                     },
-                    child: const HistoryListItem(
-                      breed: 'Pietran',
-                      date: '21/05/20',
+                    child: HistoryListItem(
+                      breed: cerdo.raza, 
+                      nombre: cerdo.nombre,
+                      date:
+                          '${cerdo.fechaNacimiento.day}/${cerdo.fechaNacimiento.month}/${cerdo.fechaNacimiento.year}',
                     ),
                   );
                 },
@@ -110,11 +133,13 @@ class AnalysisPage extends StatelessWidget {
 
 class HistoryListItem extends StatelessWidget {
   final String breed;
+  final String nombre;
   final String date;
 
   const HistoryListItem({
     super.key,
     required this.breed,
+    required this.nombre,
     required this.date,
   });
 
@@ -137,20 +162,17 @@ class HistoryListItem extends StatelessWidget {
       ),
       child: Row(
         children: [
-          
           const Icon(Icons.cruelty_free, size: 40, color: Colors.pink),
           const SizedBox(width: 16),
-          
           Expanded(
             child: Text(
-              '$breed $date',
+              '$breed  $nombre  $date',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
             ),
           ),
-          
           const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
         ],
       ),
