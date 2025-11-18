@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'start_page.dart';
 import 'create_page.dart';
 import 'password_page.dart';
+
+const Color _primaryColor = Color.fromARGB(255, 243, 33, 205);
+const Color _secondaryGreen = Color.fromARGB(255, 30, 130, 76);
+const Color _backgroundColor = Color(0xFFF7F7F7);
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -9,7 +14,7 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -19,57 +24,65 @@ class LoginPage extends StatelessWidget {
                 clipper: DiagonalClipper(),
                 child: Container(
                   width: double.infinity,
-                  height: 200,
-                  color: Colors.black,
+                  height: 250,
+                  color: _primaryColor,
                   child: Center(
                     child: Container(
-                      width: 110,
-                      height: 110,
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(255, 243, 33, 205), // Rosa distintivo
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 15,
+                          ),
+                        ],
                       ),
                       child: ClipOval(
-                        child: Image.asset(
-                          'lib/assets/logo2SmartSwine.png',
-                          fit: BoxFit.cover,
-                        ),
+                         child: Image.asset('assets/logo2SmartSwine.png', fit: BoxFit.cover),
                       ),
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 50),
 
-              // Título Login
-              const Text(
-                "Login",
-                style: TextStyle(
-                  fontSize: 32,
+              Text(
+                "¡Bienvenido de nuevo!",
+                style: GoogleFonts.poppins(
+                  fontSize: 34,
                   fontWeight: FontWeight.w900,
                   color: Colors.black,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                "Sign in to continue.",
-                style: TextStyle(fontSize: 14, color: Colors.black54),
+              Text(
+                "Inicia sesión para acceder a tus análisis.",
+                style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
               ),
 
               const SizedBox(height: 40),
 
-              // Campos de texto
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
+                padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: Column(
                   children: [
-                    _textField("Adrian Ortega Gil"),
-                    const SizedBox(height: 20),
-                    _textField("******", obscureText: true),
+                    _textField(
+                      hint: "Correo Electrónico",
+                      icon: Icons.alternate_email_rounded,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 25),
+                    _textField(
+                      hint: "Contraseña", 
+                      icon: Icons.lock_rounded, 
+                      obscureText: true,
+                    ),
                     const SizedBox(height: 40),
 
-                    // Botón Login
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -82,16 +95,17 @@ class LoginPage extends StatelessWidget {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
+                          backgroundColor: _secondaryGreen,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(15),
                           ),
+                          elevation: 8,
                         ),
-                        child: const Text(
-                          'Log in',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                        child: Text(
+                          'INICIAR SESIÓN',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
                             color: Colors.white,
                           ),
                         ),
@@ -101,9 +115,8 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
 
-              // Links inferiores
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -112,9 +125,12 @@ class LoginPage extends StatelessWidget {
                         builder: (context) => const PasswordPage()),
                   );
                 },
-                child: const Text(
-                  "Forgot Password?",
-                  style: TextStyle(color: Colors.black87),
+                child: Text(
+                  "¿Olvidaste tu contraseña?",
+                  style: GoogleFonts.poppins(
+                    color: _primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
 
@@ -125,14 +141,15 @@ class LoginPage extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => const CreatePage()),
                   );
                 },
-                child: const Text(
-                  "Signup !",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
+                child: Text(
+                  "¿Aún no tienes cuenta? Regístrate aquí.",
+                  style: GoogleFonts.poppins(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -140,26 +157,33 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-
-  static Widget _textField(String hint, {bool obscureText = false}) {
+  static Widget _textField({
+    required String hint, 
+    IconData? icon, 
+    bool obscureText = false, 
+    TextInputType keyboardType = TextInputType.text
+  }) {
     return TextField(
       obscureText: obscureText,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      keyboardType: keyboardType,
+      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+      cursorColor: _primaryColor,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-          fontWeight: FontWeight.w700,
-          color: Colors.black87,
+        hintStyle: GoogleFonts.poppins(
+          fontWeight: FontWeight.w500,
+          color: Colors.grey,
         ),
-        filled: true,
-        fillColor: Colors.grey[300],
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 18,
+        prefixIcon: icon != null ? Icon(icon, color: _primaryColor) : null,
+        
+        contentPadding: const EdgeInsets.symmetric(vertical: 15),
+        isDense: true,
+        
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: _primaryColor, width: 2.5),
         ),
       ),
     );
@@ -171,8 +195,13 @@ class DiagonalClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height - 50); 
-    path.lineTo(size.width, size.height); 
+    path.lineTo(0, size.height - 70);
+    path.quadraticBezierTo(
+      size.width / 2, 
+      size.height, 
+      size.width, 
+      size.height - 40
+    );
     path.lineTo(size.width, 0);
     path.close();
     return path;
