@@ -1,12 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 const Color _primaryColor = Color.fromARGB(255, 243, 33, 205);
 const Color _secondaryGreen = Color.fromARGB(255, 30, 130, 76);
 const Color _backgroundColor = Color(0xFFF7F7F7);
 
-class CreatePage extends StatelessWidget {
+class CreatePage extends StatefulWidget {
   const CreatePage({super.key});
+
+  @override
+  State<CreatePage> createState() => _CreatePageState();
+}
+
+class _CreatePageState extends State<CreatePage> {
+  // Controladores de texto
+  final TextEditingController nameCtrl = TextEditingController();
+  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController passCtrl = TextEditingController();
+  final TextEditingController confirmCtrl = TextEditingController();
+
+  bool loading = false;
+
+  Future<void> registerUser() async {
+    final email = emailCtrl.text.trim();
+    final pass = passCtrl.text.trim();
+    final confirm = confirmCtrl.text.trim();
+
+    if (email.isEmpty || pass.isEmpty || confirm.isEmpty) {
+      _showMessage("Por favor completa todos los campos.");
+      return;
+    }
+
+    if (pass != confirm) {
+      _showMessage("Las contraseñas no coinciden.");
+      return;
+    }
+
+    try {
+      setState(() => loading = true);
+
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: pass,
+      );
+
+      _showMessage("Cuenta creada correctamente 🎉");
+
+      Navigator.pop(context); // Regresa al login
+
+    } on FirebaseAuthException catch (e) {
+      _showMessage(e.message ?? "Error desconocido");
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,16 +70,14 @@ class CreatePage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              
               ClipPath(
                 clipper: InvertedCurvedClipper(),
                 child: Container(
                   width: double.infinity,
-                  height: 250, 
-                  color: _primaryColor, 
+                  height: 250,
+                  color: _primaryColor,
                   child: Stack(
                     children: [
-                      
                       Positioned(
                         top: 25,
                         left: 10,
@@ -33,11 +85,10 @@ class CreatePage extends StatelessWidget {
                           icon: const Icon(Icons.arrow_back_ios_new_rounded,
                               color: Colors.white, size: 28),
                           onPressed: () {
-                            Navigator.pop(context); 
+                            Navigator.pop(context);
                           },
                         ),
                       ),
-
                       Center(
                         child: Container(
                           width: 120,
@@ -52,9 +103,8 @@ class CreatePage extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: ClipOval(
-                            child: Icon(Icons.person_add_alt_1_rounded, size: 60, color: _secondaryGreen), 
-                          ),
+                          child: const Icon(Icons.person_add_alt_1_rounded,
+                              size: 60, color: _secondaryGreen),
                         ),
                       ),
                     ],
@@ -89,37 +139,39 @@ class CreatePage extends StatelessWidget {
                 child: Column(
                   children: [
                     _textField(
+                      controller: nameCtrl,
                       hint: "Nombre Completo",
                       icon: Icons.person_rounded,
                     ),
                     const SizedBox(height: 25),
                     _textField(
+                      controller: emailCtrl,
                       hint: "Correo Electrónico",
                       icon: Icons.mail_rounded,
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 25),
                     _textField(
-                      hint: "Contraseña", 
-                      icon: Icons.lock_rounded, 
+                      controller: passCtrl,
+                      hint: "Contraseña",
+                      icon: Icons.lock_rounded,
                       obscureText: true,
                     ),
                     const SizedBox(height: 25),
                     _textField(
-                      hint: "Confirmar Contraseña", 
-                      icon: Icons.lock_open_rounded, 
+                      controller: confirmCtrl,
+                      hint: "Confirmar Contraseña",
+                      icon: Icons.lock_open_rounded,
                       obscureText: true,
                     ),
-                    
+
                     const SizedBox(height: 50),
 
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Lógica de registro
-                        },
+                        onPressed: loading ? null : registerUser,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _secondaryGreen,
                           shape: RoundedRectangleBorder(
@@ -127,14 +179,16 @@ class CreatePage extends StatelessWidget {
                           ),
                           elevation: 8,
                         ),
-                        child: Text(
-                          'REGISTRARSE',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: loading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                'REGISTRARSE',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -148,18 +202,20 @@ class CreatePage extends StatelessWidget {
     );
   }
 
-  
   static Widget _textField({
-    required String hint, 
-    IconData? icon, 
-    bool obscureText = false, 
-    TextInputType keyboardType = TextInputType.text
+    required TextEditingController controller,
+    required String hint,
+    IconData? icon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return TextField(
+      controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
-      cursorColor: _primaryColor, 
+      style: GoogleFonts.poppins(
+          fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+      cursorColor: _primaryColor,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.poppins(
@@ -167,10 +223,8 @@ class CreatePage extends StatelessWidget {
           color: Colors.grey,
         ),
         prefixIcon: icon != null ? Icon(icon, color: _primaryColor) : null,
-        
         contentPadding: const EdgeInsets.symmetric(vertical: 15),
         isDense: true,
-        
         enabledBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
         ),
@@ -182,20 +236,19 @@ class CreatePage extends StatelessWidget {
   }
 }
 
-
 class InvertedCurvedClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height - 40); 
-    
+    path.lineTo(0, size.height - 40);
+
     path.quadraticBezierTo(
-      size.width / 2, 
-      size.height + 20, 
-      size.width, 
-      size.height - 70 
+      size.width / 2,
+      size.height + 20,
+      size.width,
+      size.height - 70,
     );
-    
+
     path.lineTo(size.width, 0);
     path.close();
     return path;

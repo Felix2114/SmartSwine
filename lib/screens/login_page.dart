@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'start_page.dart';
 import 'create_page.dart';
 import 'password_page.dart';
@@ -8,8 +10,16 @@ const Color _primaryColor = Color.fromARGB(255, 243, 33, 205);
 const Color _secondaryGreen = Color.fromARGB(255, 30, 130, 76);
 const Color _backgroundColor = Color(0xFFF7F7F7);
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +29,6 @@ class LoginPage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              
               ClipPath(
                 clipper: DiagonalClipper(),
                 child: Container(
@@ -41,7 +50,10 @@ class LoginPage extends StatelessWidget {
                         ],
                       ),
                       child: ClipOval(
-                         child: Image.asset('assets/logo2SmartSwine.png', fit: BoxFit.cover),
+                        child: Image.asset(
+                          'assets/logo2SmartSwine.png',
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
@@ -61,7 +73,8 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 "Inicia sesión para acceder a tus análisis.",
-                style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
+                style:
+                    GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
               ),
 
               const SizedBox(height: 40),
@@ -74,12 +87,14 @@ class LoginPage extends StatelessWidget {
                       hint: "Correo Electrónico",
                       icon: Icons.alternate_email_rounded,
                       keyboardType: TextInputType.emailAddress,
+                      controller: emailController,
                     ),
                     const SizedBox(height: 25),
                     _textField(
-                      hint: "Contraseña", 
-                      icon: Icons.lock_rounded, 
+                      hint: "Contraseña",
+                      icon: Icons.lock_rounded,
                       obscureText: true,
+                      controller: passwordController,
                     ),
                     const SizedBox(height: 40),
 
@@ -87,12 +102,31 @@ class LoginPage extends StatelessWidget {
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const StartPage()),
-                          );
+                        onPressed: () async {
+                          final email = emailController.text.trim();
+                          final password = passwordController.text.trim();
+
+                          try {
+                            await FirebaseAuth.instance
+                                .signInWithEmailAndPassword(
+                              email: email,
+                              password: password,
+                            );
+
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const StartPage(),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error: ${e.toString()}"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _secondaryGreen,
@@ -122,7 +156,8 @@ class LoginPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const PasswordPage()),
+                      builder: (context) => const PasswordPage(),
+                    ),
                   );
                 },
                 child: Text(
@@ -138,7 +173,9 @@ class LoginPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const CreatePage()),
+                    MaterialPageRoute(
+                      builder: (context) => const CreatePage(),
+                    ),
                   );
                 },
                 child: Text(
@@ -158,15 +195,21 @@ class LoginPage extends StatelessWidget {
   }
 
   static Widget _textField({
-    required String hint, 
-    IconData? icon, 
-    bool obscureText = false, 
-    TextInputType keyboardType = TextInputType.text
+    required String hint,
+    IconData? icon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+    required TextEditingController controller,
   }) {
     return TextField(
+      controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+      style: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
+      ),
       cursorColor: _primaryColor,
       decoration: InputDecoration(
         hintText: hint,
@@ -175,21 +218,24 @@ class LoginPage extends StatelessWidget {
           color: Colors.grey,
         ),
         prefixIcon: icon != null ? Icon(icon, color: _primaryColor) : null,
-        
         contentPadding: const EdgeInsets.symmetric(vertical: 15),
         isDense: true,
-        
         enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
+          borderSide: BorderSide(
+            color: Colors.grey.shade400,
+            width: 1.5,
+          ),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: _primaryColor, width: 2.5),
+          borderSide: BorderSide(
+            color: _primaryColor,
+            width: 2.5,
+          ),
         ),
       ),
     );
   }
 }
-
 
 class DiagonalClipper extends CustomClipper<Path> {
   @override
@@ -197,10 +243,10 @@ class DiagonalClipper extends CustomClipper<Path> {
     Path path = Path();
     path.lineTo(0, size.height - 70);
     path.quadraticBezierTo(
-      size.width / 2, 
-      size.height, 
-      size.width, 
-      size.height - 40
+      size.width / 2,
+      size.height,
+      size.width,
+      size.height - 40,
     );
     path.lineTo(size.width, 0);
     path.close();
