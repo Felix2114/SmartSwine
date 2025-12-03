@@ -1,23 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'start_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart'; 
 
 const Color _primaryColor = Color.fromARGB(255, 243, 33, 205);
 const Color _secondaryGreen = Color.fromARGB(255, 30, 130, 76);
 const Color _backgroundColor = Color(0xFFF7F7F7);
 
 class DataPage extends StatelessWidget {
+  // Nota: Se recomienda quitar 'const' del constructor para evitar errores de compilación
+  // con variables final no-constantes, o usar 'late final' y quitar 'const' del constructor.
+  // Por simplicidad, inicializamos el DateFormat dentro del build.
   const DataPage({super.key});
-
 
   @override
   Widget build(BuildContext context) {
-    final Map<String, dynamic> analysisData = {
-      'raza': 'YORKSHIRE',
-      'edadEstimada': '2 AÑOS',
-      'etapa': 'ADULTO',
-      'pesoEstimado': '40 KG',
-    };
+    // Inicialización del DateFormat dentro del build para evitar conflictos de 'const'
+    final DateFormat dateFormat = DateFormat('dd/MM/yyyy HH:mm:ss');
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Asegurar que el usuario esté autenticado
+    if (user == null) {
+      return const Center(child: Text("Por favor, inicie sesión."));
+    }
+
+    // Consulta a Firestore: filtrar por usuario y ordenar por fecha
+    final logsStream = FirebaseFirestore.instance
+        .collection('prediction_logs')
+        .where('user_id', isEqualTo: user.uid)
+        .orderBy('timestamp', descending: true)
+        .limit(20)
+        .snapshots();
 
     return Scaffold(
       backgroundColor: _backgroundColor,
@@ -27,6 +42,7 @@ class DataPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
           onPressed: () {
+            // Asumo que quieres ir a la segunda pestaña (index 2) de StartPage
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -36,7 +52,7 @@ class DataPage extends StatelessWidget {
           },
         ),
         title: Text(
-          'DETALLES DEL ANÁLISIS',
+          'HISTORIAL DE ANÁLISIS',
           style: GoogleFonts.poppins(
             color: Colors.black87,
             fontWeight: FontWeight.w700,
@@ -45,198 +61,72 @@ class DataPage extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_rounded, color: Colors.black54),
-            onPressed: () {
-              // Lógica para compartir el resultado
-            },
-          ),
-        ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Muestra Analizada',
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: _primaryColor,
-                ),
-              ),
-              const SizedBox(height: 15),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: logsStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            // Muestra el error de índice si ocurre
+            return Center(child: Text('Error al cargar historial: ${snapshot.error}'));
+          }
 
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    'assets/cerdo.jpg',
-                    height: 250,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 250,
-                        color: Colors.grey[300],
-                        child: Center(
-                          child: Icon(
-                            Icons.image_not_supported_rounded,
-                            size: 80,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-              Text(
-                'Resultados Clave',
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
+          // Si no hay documentos
+          final logs = snapshot.data!.docs;
+          if (logs.isEmpty) {
+            return Center(
+              child: Text(
+                'Aún no tienes predicciones en tu historial.',
+                style: GoogleFonts.poppins(fontSize: 18, color: Colors.grey),
               ),
-              const SizedBox(height: 15),
+            );
+          }
 
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 15,
-                crossAxisSpacing: 15,
-                childAspectRatio: 1.4,
-                children: [
-                  _ResultCard(
-                    title: 'Raza',
-                    value: analysisData['raza'],
-                    icon: Icons.pets_rounded,
-                    color: _secondaryGreen,
-                  ),
-                  _ResultCard(
-                    title: 'Etapa',
-                    value: analysisData['etapa'],
-                    icon: Icons.assignment_turned_in_rounded,
+          // Construir la lista con los resultados
+          return ListView.builder(
+            padding: const EdgeInsets.all(15),
+            itemCount: logs.length,
+            itemBuilder: (context, index) {
+              final log = logs[index].data() as Map<String, dynamic>;
+              final stage = log['stage_predicted'] as String? ?? 'N/D';
+              final timestamp = log['timestamp'] as Timestamp?;
+              
+              String dateStr = timestamp != null 
+                  ? dateFormat.format(timestamp.toDate()) 
+                  : 'Fecha Desconocida';
+              
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.assignment_turned_in_rounded, 
                     color: _primaryColor,
                   ),
-                  _ResultCard(
-                    title: 'Edad Estimada',
-                    value: analysisData['edadEstimada'],
-                    icon: Icons.calendar_month_rounded,
-                    color: Colors.orange.shade700,
-                  ),
-                  _ResultCard(
-                    title: 'Peso Estimado',
-                    value: analysisData['pesoEstimado'],
-                    icon: Icons.monitor_weight_rounded,
-                    color: Colors.blue.shade700,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-              
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Lógica para guardar o exportar
-                },
-                icon: const Icon(Icons.download_rounded, size: 24),
-                label: Text(
-                  'EXPORTAR DATOS',
-                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _primaryColor, 
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResultCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _ResultCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 28),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
+                  title: Text(
+                    stage.toUpperCase(),
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54,
+                      fontWeight: FontWeight.w700, 
+                      fontSize: 18
                     ),
                   ),
+                  subtitle: Text(
+                    'Predicción realizada el $dateStr',
+                    style: GoogleFonts.poppins(color: Colors.grey.shade600),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    // Acción al hacer tap
+                  },
                 ),
-              ],
-            ),
-            
-            Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: color,
-              ),
-            ),
-          ],
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }

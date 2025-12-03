@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 const Color _primaryColor = Color.fromARGB(255, 243, 33, 205);
 const Color _secondaryGreen = Color.fromARGB(255, 30, 130, 76);
@@ -23,38 +24,55 @@ class _CreatePageState extends State<CreatePage> {
   bool loading = false;
 
   Future<void> registerUser() async {
-    final email = emailCtrl.text.trim();
-    final pass = passCtrl.text.trim();
-    final confirm = confirmCtrl.text.trim();
+  final name = nameCtrl.text.trim();
+  final email = emailCtrl.text.trim();
+  final pass = passCtrl.text.trim();
+  final confirm = confirmCtrl.text.trim();
 
-    if (email.isEmpty || pass.isEmpty || confirm.isEmpty) {
-      _showMessage("Por favor completa todos los campos.");
-      return;
-    }
-
-    if (pass != confirm) {
-      _showMessage("Las contraseñas no coinciden.");
-      return;
-    }
-
-    try {
-      setState(() => loading = true);
-
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: pass,
-      );
-
-      _showMessage("Cuenta creada correctamente 🎉");
-
-      Navigator.pop(context); // Regresa al login
-
-    } on FirebaseAuthException catch (e) {
-      _showMessage(e.message ?? "Error desconocido");
-    } finally {
-      setState(() => loading = false);
-    }
+  if (name.isEmpty || email.isEmpty || pass.isEmpty || confirm.isEmpty) {
+    _showMessage("Por favor completa todos los campos.");
+    return;
   }
+
+  if (pass != confirm) {
+    _showMessage("Las contraseñas no coinciden.");
+    return;
+  }
+
+  try {
+    setState(() => loading = true);
+
+    // Crear usuario en Firebase Auth
+    final credential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(email: email, password: pass);
+
+    // Guardar nombre en Auth (displayName)
+    await credential.user!.updateDisplayName(name);
+    await credential.user!.reload();
+
+    // =============================
+    //  GUARDAR NOMBRE EN FIRESTORE
+    // =============================
+    final uid = credential.user!.uid;
+
+    await FirebaseFirestore.instance.collection("users").doc(uid).set({
+      "name": name,
+      "email": email,
+      "createdAt": DateTime.now(),
+    });
+    // =============================
+
+    _showMessage("Cuenta creada correctamente 🎉");
+
+    Navigator.pop(context);
+
+  } on FirebaseAuthException catch (e) {
+    _showMessage(e.message ?? "Error desconocido");
+  } finally {
+    setState(() => loading = false);
+  }
+}
+
 
   void _showMessage(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(

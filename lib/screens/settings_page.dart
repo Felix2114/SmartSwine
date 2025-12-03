@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'login_page.dart';
 
-// Definición de colores
-const Color _primaryColor = Color.fromARGB(255, 243, 33, 205); // Magenta
-const Color _secondaryGreen = Color.fromARGB(255, 30, 130, 76); // Verde oscuro
-const Color _backgroundColor = Color(0xFFF7F7F7); // Fondo muy claro
+// Colores base
+const Color _primaryColor = Color.fromARGB(255, 243, 33, 205);
+const Color _backgroundColor = Color(0xFFF7F7F7);
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -16,216 +17,231 @@ class SettingsPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
         title: Text(
           'Configuración',
           style: GoogleFonts.poppins(
-            color: Colors.black87,
+            color: _primaryColor,
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
         ),
-        centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // --- 1. SECCIÓN DE PERFIL ---
-            _buildProfileSection(context),
-            const SizedBox(height: 30),
+            _buildProfileCard(),
+            const SizedBox(height: 40),
 
-            // --- 2. SECCIÓN DE CUENTA ---
-            _buildSettingsGroup(
-              context,
-              title: 'Ajustes de Cuenta',
-              color: _primaryColor,
-              items: [
-                _buildSettingsItem(context, 'Cambiar Contraseña', Icons.lock_rounded, color: _primaryColor),
-                _buildSettingsItem(context, 'Cambiar Correo', Icons.mail_rounded, color: _primaryColor),
-                _buildSettingsItem(context, 'Gestión de Cuenta', Icons.manage_accounts_rounded, color: _primaryColor),
-              ],
-            ),
-            const SizedBox(height: 30),
-
-            // --- 3. SECCIÓN GENERAL ---
-            _buildSettingsGroup(
-              context,
-              title: 'General',
-              color: _secondaryGreen,
-              items: [
-                _buildSettingsItem(context, 'Notificaciones', Icons.notifications_active_rounded, color: _secondaryGreen),
-                _buildSettingsItem(context, 'Idioma', Icons.language_rounded, color: _secondaryGreen),
-                _buildSettingsItem(context, 'Privacidad y Seguridad', Icons.security_rounded, color: _secondaryGreen),
-              ],
-            ),
-            const SizedBox(height: 30),
-
-            // --- 4. SECCIÓN DE SOPORTE ---
-            _buildSettingsGroup(
-              context,
-              title: 'Soporte',
-              color: Colors.blue.shade700,
-              items: [
-                _buildSettingsItem(context, 'Ayuda y FAQs', Icons.help_outline_rounded, color: Colors.blue.shade700),
-                _buildSettingsItem(context, 'Términos y Condiciones', Icons.description_rounded, color: Colors.blue.shade700),
-                _buildSettingsItem(context, 'Cerrar Sesión', Icons.logout_rounded, color: Colors.red.shade700),
-              ],
-            ),
+            _aboutButton(context),
             const SizedBox(height: 20),
+
+            _logoutButton(context),
           ],
         ),
       ),
     );
   }
 
-  // --- Widget 1: Sección de Perfil ---
-  Widget _buildProfileSection(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryColor.withOpacity(0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: _primaryColor.withOpacity(0.8),
-                child: const Icon(Icons.person, size: 45, color: Colors.white),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: _secondaryGreen,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: const Icon(Icons.edit, color: Colors.white, size: 16),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Poke',
-                style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.black87),
-              ),
-              Text(
-                '@felix',
-                style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'Usuario Pro',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: _secondaryGreen,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Icon(Icons.arrow_forward_ios_rounded, size: 20, color: Colors.grey.shade400),
-        ],
-      ),
-    );
-  }
+  // ---------------- PERFIL ----------------
+Widget _buildProfileCard() {
+  final userName = FirebaseAuth.instance.currentUser?.displayName ?? "Usuario";
 
-  // --- Widget 2: Grupo de Configuraciones ---
-  Widget _buildSettingsGroup(BuildContext context, {required String title, required Color color, required List<Widget> items}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Título de la sección
-        Padding(
-          padding: const EdgeInsets.only(left: 10, bottom: 8),
-          child: Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ),
-        // Contenedor de las opciones
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            children: items.map((item) {
-              // Añade un Divider excepto después del último item
-              if (item != items.last) {
-                return Column(
-                  children: [
-                    item,
-                    Divider(height: 1, indent: 20, endIndent: 20, color: Colors.grey.shade200),
-                  ],
-                );
-              }
-              return item;
-            }).toList(),
-          ),
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: _primaryColor.withOpacity(0.15),
+          blurRadius: 15,
+          offset: const Offset(0, 8),
         ),
       ],
+    ),
+    child: Row(
+      children: [
+        CircleAvatar(
+          radius: 40,
+          backgroundColor: _primaryColor.withOpacity(0.85),
+          child: const Icon(Icons.person, size: 45, color: Colors.white),
+        ),
+        const SizedBox(width: 15),
+
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              userName,
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              '@${userName.toLowerCase().replaceAll(" ", "")}',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+
+        const Spacer(),
+      ],
+    ),
+  );
+}
+
+
+  // ---------------- BOTÓN ACERCA DE ----------------
+  Widget _aboutButton(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _primaryColor.withOpacity(0.10),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.info_outline, color: _primaryColor, size: 26),
+        ),
+        title: Text(
+          "Acerca de",
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 17,
+            color: Colors.black87,
+          ),
+        ),
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+            ),
+            builder: (context) {
+              return Padding(
+                padding: const EdgeInsets.all(25),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 55,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    Text(
+                      "Acerca de la App",
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+
+                    Text(
+                      "Aplicación desarrollada para predecir la etapa de crecimiento de un cerdo "
+                      "usando una imagen o fotografía. Utiliza modelos de visión artificial "
+                      "para ofrecer resultados rápidos y precisos.",
+                      style: GoogleFonts.poppins(fontSize: 15, height: 1.4),
+                    ),
+                    const SizedBox(height: 25),
+
+                    Text(
+                      "Versión 1.0.0",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
-  // --- Widget 3: Elemento Individual de Configuración ---
-  Widget _buildSettingsItem(BuildContext context, String title, IconData icon, {required Color color}) {
-    return ListTile(
+  // ---------------- BOTÓN DE CERRAR SESIÓN ----------------
+ // ---------------- BOTÓN DE CERRAR SESIÓN ----------------
+Widget _logoutButton(BuildContext context) {
+  return Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(15),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.06),
+          blurRadius: 10,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: Colors.red.withOpacity(0.10),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: color, size: 24),
+        child: const Icon(Icons.logout_rounded, color: Colors.red, size: 26),
       ),
       title: Text(
-        title,
+        "Cerrar Sesión",
         style: GoogleFonts.poppins(
-          fontWeight: FontWeight.w500,
-          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          fontSize: 17,
           color: Colors.black87,
         ),
       ),
-      trailing: Icon(Icons.arrow_forward_ios_rounded, size: 18, color: Colors.grey.shade400),
-      onTap: () {
-        // Lógica de navegación a la pantalla de detalle
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Navegando a: $title', style: GoogleFonts.poppins()),
-            duration: const Duration(milliseconds: 800),
-          ),
-        );
+      onTap: () async {
+        await FirebaseAuth.instance.signOut();
+
+        if (context.mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+            (Route<dynamic> route) => false,
+          );
+        }
       },
-    );
-  }
+    ),
+  );
 }
+
+
+
+}
+
+

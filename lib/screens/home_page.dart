@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 void main() {
   runApp(const MyAnimatedApp());
@@ -41,6 +43,8 @@ class FunHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userName = FirebaseAuth.instance.currentUser?.displayName ?? "Usuario";
+
     return Scaffold(
       backgroundColor: const Color(0xfff8e8ff),
       body: SafeArea(
@@ -56,7 +60,7 @@ class FunHomePage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "¡Hola Poke!",
+                        "¡Hola $userName!",
                         style: GoogleFonts.poppins(
                           fontSize: 26,
                           fontWeight: FontWeight.w800,

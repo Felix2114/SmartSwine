@@ -9,8 +9,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:http/http.dart' as http;
-import 'package:image/image.dart' as img;
 import 'package:rflutter_alert/rflutter_alert.dart';
+
+import 'package:firebase_auth/firebase_auth.dart'; 
+import 'package:cloud_firestore/cloud_firestore.dart'; 
 
 const Color _primaryColor = Color.fromARGB(255, 243, 33, 205);
 const Color _secondaryGreen = Color.fromARGB(255, 30, 130, 76);
@@ -30,13 +32,14 @@ class _CameraPageState extends State<CameraPage> {
   bool _isLoading = false;
   String? _pathImg;
 
-  // CAMBIA ESTA URL POR LA DE TU MODELO EN RENDER
+  // CAMBIO 1: URL CORREGIDA. Apuntando al endpoint "/predict" de tu app.py
   final url = Uri.parse(
-    "https://smartswine-poke.onrender.com/v1/models/pig-classifier:predict",
+    "https://smartswine-poke.onrender.com/predict",
   );
 
-  final headers = {"Content-Type": "application/json"};
-
+  // Los headers ya no son necesarios porque usaremos MultipartRequest
+  // final headers = {"Content-Type": "application/json"}; 
+  
   Future<File> _saveFilePermanently(String imagePath) async {
     final directory = await getApplicationDocumentsDirectory();
     final name = path.basename(imagePath);
@@ -77,40 +80,10 @@ class _CameraPageState extends State<CameraPage> {
   }
 
   //---------------------------------------------------------------------
-  // 🔥 NUEVA VERSIÓN — compatible con MobileNetV2 (RGB, 224x224, 0–1)
+  // FUNCIÓN ELIMINADA: _processImage ya no es necesaria, el pre-procesamiento lo hace app.py
   //---------------------------------------------------------------------
-  Future<List<List<List<List<double>>>>> _processImage(File file) async {
-  final bytes = await file.readAsBytes();
-  img.Image? image = img.decodeImage(bytes);
 
-  if (image == null) return [];
-
-  // ✔️ CORREGIDO — copyRotate usa argumentos POSICIONALES
-  image = img.copyResize(
-    img.copyRotate(image, 0),
-    width: 224,
-    height: 224,
-  );
-
-  List<List<List<double>>> result = List.generate(
-    224,
-    (y) => List.generate(
-      224,
-      (x) {
-        final pixel = image!.getPixel(x, y);
-
-        final r = img.getRed(pixel) / 255.0;
-        final g = img.getGreen(pixel) / 255.0;
-        final b = img.getBlue(pixel) / 255.0;
-
-        return [r, g, b];
-      },
-    ),
-  );
-
-  return [result];
-}
-
+  // CAMBIO 2: _startPrediction MODIFICADA para enviar la imagen como archivo (MultipartRequest)
   Future<void> _startPrediction() async {
     if (_pathImg == null) return;
 
@@ -121,64 +94,115 @@ class _CameraPageState extends State<CameraPage> {
     );
 
     try {
-      final processed = await _processImage(File(_pathImg!));
-
-      final predictionInstance = {
-        "instances": processed,
-      };
-
-      final res = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode(predictionInstance),
+      // 1. Crear una solicitud MultipartRequest
+      final request = http.MultipartRequest('POST', url);
+      
+      // 2. Adjuntar el archivo de imagen. El nombre del campo DEBE ser 'image'
+      // para coincidir con request.files["image"] en tu app.py
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image', // Clave del campo de archivo
+          _pathImg!,
+        ),
       );
+
+      // 3. Enviar la solicitud y obtener la respuesta
+      final streamedResponse = await request.send();
+      final res = await http.Response.fromStream(streamedResponse);
 
       Navigator.pop(context);
 
       if (res.statusCode == 200) {
-        final jsonPrediction = jsonDecode(res.body);
-        final pred = jsonPrediction["predictions"][0] as List;
+    // La respuesta de app.py es: {"class": "destete", "confidence": 0.98}
+    final jsonPrediction = jsonDecode(res.body);
 
-        // obtener índice con mayor probabilidad
-        int maxIndex = 0;
-        double maxValue = pred[0];
+    final detectedClass = jsonPrediction["class"] as String;
+    // La confianza viene como float (0.0 a 1.0)
+    final confidenceValue = jsonPrediction["confidence"] as double;
 
-        for (int i = 1; i < pred.length; i++) {
-          if (pred[i] > maxValue) {
-            maxValue = pred[i];
-            maxIndex = i;
+    // AÑADIR ESTA LÍNEA AQUÍ
+    await _savePredictionLog(detectedClass); // Guarda el log en Firestore
+
+    _showPredictionResult(
+      true,
+      "Predicción Exitosa",
+      "Etapa detectada: ${detectedClass.toUpperCase()}\n"
+          "Confianza: ${(confidenceValue * 100).toStringAsFixed(2)}%",
+    );
+
+} else {
+        // Manejar errores como el 400 Bad Request que puede enviar el servidor
+        String errorMessage = "El servidor devolvió ${res.statusCode}.";
+        try {
+          final errorBody = jsonDecode(res.body);
+          if (errorBody.containsKey("error")) {
+            errorMessage = errorBody["error"];
           }
+        } catch (_) {
+          // Si no es JSON, mostrar el body crudo si es posible
+          errorMessage = "${res.statusCode}: ${res.body}";
         }
 
-        // 🔥 clases del modelo
-        final classes = ["destete", "crecimiento", "engorda"];
-
-        _showPredictionResult(
-          true,
-          "Predicción Exitosa",
-          "Etapa detectada: ${classes[maxIndex].toUpperCase()}\n"
-              "Confianza: ${(maxValue * 100).toStringAsFixed(2)}%",
-        );
-
-      } else {
         _showPredictionResult(
           false,
-          "Error",
-          "El servidor devolvió ${res.statusCode}. Revisa la URL del modelo.",
+          "Error de API",
+          errorMessage,
         );
       }
     } catch (e) {
       Navigator.pop(context);
       _showPredictionResult(
         false,
-        "Error",
+        "Error de Conexión",
         "No se pudo contactar al servidor: $e",
       );
     } finally {
       setState(() => _isLoading = false);
     }
   }
+  
+  // Dentro de la clase _CameraPageState...
 
+Future<void> _savePredictionLog(String stage) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    _showErrorDialog("Error: Usuario no autenticado para guardar log.");
+    return;
+  }
+
+  try {
+    // Referencia a la base de datos de Firestore
+    final db = FirebaseFirestore.instance;
+
+    // Crear un mapa de datos para el log
+    final logData = {
+      'user_id': user.uid, // ID del usuario que hizo la predicción
+      'stage_predicted': stage, // Etapa predicha (destete, crecimiento, engorda)
+      'timestamp': FieldValue.serverTimestamp(), // Fecha y hora del registro
+      // Puedes añadir más campos como 'image_url', 'confidence', etc.
+    };
+
+    // 1. Obtener la colección de logs del usuario
+    // Creamos una subcolección 'logs' dentro del documento del usuario.
+    // Asumimos que tienes una colección principal 'users' donde el ID del documento
+    // es el UID del usuario.
+
+    // Opción A: Guardar en una colección global 'prediction_logs'
+    await db.collection("prediction_logs").add(logData);
+    
+    // Opción B (Recomendada si quieres ver historial por usuario): 
+    // Guardar en la subcolección 'logs' del documento del usuario.
+    /*
+    await db.collection("users").doc(user.uid).collection("logs").add(logData);
+    */
+
+    print("Log de predicción guardado con éxito: $stage");
+
+  } catch (e) {
+    _showErrorDialog("Error al guardar el log de predicción en Firestore: $e");
+  }
+}
+  
   void _showPredictionResult(bool success, String title, String desc) {
     AlertType type = success ? AlertType.success : AlertType.error;
     Color buttonColor = success ? _secondaryGreen : _primaryColor;
